@@ -10,16 +10,30 @@ import {
   TouchableOpacity,
   InteractionManager,
   Dimensions,
-  StyleSheet
+  StyleSheet,
+  AsyncStorage,
+  NativeModules
 } from 'react-native';
+
+const { ToolManager } = NativeModules;
+
 
 const {width, height} = Dimensions.get('window');
 const RATIO_WIDTH = width / 375;
+const isIphoneX = ToolManager.isIphoneX === 'true';
 
 export default class Navigator extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      mute: false
+    };
+  }
+
+  componentDidMount() {
+    InteractionManager.runAfterInteractions(() => {
+
+    })
   }
 
   render() {
@@ -37,8 +51,15 @@ export default class Navigator extends Component {
         </View>
         <TouchableOpacity
           style={styles.item}
+          onPress={() => {
+            this.setState({mute: !this.state.mute});
+
+          }}
         >
-          <Image style={styles.itemSource} source={require('./images/mute.png')}/>
+          {
+            this.state.mute ? <Image style={styles.itemSource} source={require('./images/mute.png')}/> :
+              <Image style={styles.itemSource} source={require('./images/sound.png')}/>
+          }
         </TouchableOpacity>
       </View>
     )
@@ -53,8 +74,8 @@ Navigator.defaultProps = {
 
 let styles = StyleSheet.create({
   main: {
-    marginTop: Platform.OS === 'ios' ? 20 : 0,
-    height: Platform.OS === 'ios' ? 64 : 56,
+    paddingTop: Platform.OS === 'ios' ? (isIphoneX ? 44 : 20) : 0,
+    height: Platform.OS === 'ios' ? (isIphoneX ? 88 : 64) : 56,
     width: width,
     backgroundColor: 'transparent',
     flexDirection: 'row',
