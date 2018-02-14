@@ -20,7 +20,7 @@ const { ToolManager } = NativeModules;
 
 const {width, height} = Dimensions.get('window');
 const RATIO_WIDTH = width / 375;
-const isIphoneX = ToolManager.isIphoneX === 'true';
+const isIphoneX = Platform.OS === 'ios' ? ToolManager.isIphoneX === 'true' : false;
 
 export default class Navigator extends Component {
   constructor(props) {

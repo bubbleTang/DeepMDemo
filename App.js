@@ -37,7 +37,7 @@ export default class App extends Component<{}> {
   componentDidMount() {
     setTimeout(() => {
       SplashScreen.hide();
-    }, 1000);
+    }, 2000);
   }
 
   _renderSwiper() {
@@ -87,6 +87,7 @@ export default class App extends Component<{}> {
           style={styles.btn}
           onPress={() => {
           }}
+          activeOpacity={0.7}
         >
           <Text>
             {'重置'}
