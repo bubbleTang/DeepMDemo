@@ -29,6 +29,7 @@ let Sound = require('react-native-sound');
 const RATIO_HEIGHT = height / 677;
 const RATIO_WIDTH = width / 375;
 const REMOVE_HEIGHT = 20 * RATIO_HEIGHT;
+const DEFAULT_TIME = 1 * 60;
 
 export default class App extends Component<{}> {
   constructor(props) {
@@ -38,8 +39,9 @@ export default class App extends Component<{}> {
     this.srcName = null;
     this.state = {
       index: 0,
-      time: 25 * 60,
-      faceStateDown: this.faceStateDown
+      time: DEFAULT_TIME,
+      faceStateDown: this.faceStateDown,
+      mute: false
     };
   }
 
@@ -74,8 +76,22 @@ export default class App extends Component<{}> {
   }
 
   _cutDown() {
-    this.timer = setInterval(() =>  {
-      this.setState({time: this.state.time - 1})
+    this.timer = setInterval(() => {
+      let time = this.state.time - 1;
+
+      if (time > 0) {
+        this.setState({time: time});
+
+      } else {
+
+        Vibration.vibrate([0, 1], false);
+        this.setState({time: DEFAULT_TIME});
+        this.whoosh && this.whoosh.pause();
+        this.whoosh && this.whoosh.release();
+        this.timer && clearInterval(this.timer);
+      }
+
+
     }, 1000)
   }
 
@@ -84,7 +100,6 @@ export default class App extends Component<{}> {
   }
 
   _playMusic(src) {
-
     if (this.srcName !== src) {
 
       this.srcName = src;
@@ -95,7 +110,13 @@ export default class App extends Component<{}> {
           console.log('音频加载失败', error);
           return;
         }
+        if (this.state.mute === true) {
+          this.whoosh && this.whoosh.setVolume(0);
+        } else {
+          this.whoosh && this.whoosh.setVolume(0.5);
+        }
         console.log('duration in seconds: ' + this.whoosh.getDuration() + 'number of channels: ' + this.whoosh.getNumberOfChannels());
+        this.whoosh.setNumberOfLoops(-1);
         this.whoosh.play((success) => {
           if (success) {
             console.log('播放成功');
@@ -128,7 +149,13 @@ export default class App extends Component<{}> {
         console.log('音频加载失败', error);
         return;
       }
+      if (this.state.mute === true) {
+        this.whoosh && this.whoosh.setVolume(0);
+      } else {
+        this.whoosh && this.whoosh.setVolume(0.5);
+      }
       console.log('duration in seconds: ' + this.whoosh.getDuration() + 'number of channels: ' + this.whoosh.getNumberOfChannels());
+      this.whoosh.setNumberOfLoops(-1);
       this.whoosh.play((success) => {
         if (success) {
           console.log('播放成功');
@@ -154,7 +181,7 @@ export default class App extends Component<{}> {
         activeDot={<View style={[{backgroundColor: '#BBBBBB'}, styles.dot]}/>}
         onMomentumScrollEnd={(evt) => {
           let contentOffsetY = evt.nativeEvent.contentOffset.y;
-          this.setState({index: contentOffsetY / height, time: 25 * 60});
+          this.setState({index: contentOffsetY / height, time: DEFAULT_TIME});
         }}
       >
         {
@@ -177,10 +204,24 @@ export default class App extends Component<{}> {
 
         {this._renderSwiper()}
 
-        <Navigator title={data[this.state.index].title}/>
+        <Navigator
+          title={data[this.state.index].title}
+          onMuteChange={(mute: boolean) => {
+            this.setState({mute: mute});
+            if (mute === true) {
+              this.whoosh && this.whoosh.setVolume(0);
+            } else {
+              this.whoosh && this.whoosh.setVolume(0.5);
+            }
+          }}
+        />
 
         <Text style={styles.time}>
-          {Math.floor(this.state.time / 60) + ' : ' + (Math.floor(this.state.time % 60) < 10 ? '0' + Math.floor(this.state.time % 60) : Math.floor(this.state.time % 60))}
+          {
+            Math.floor(this.state.time / 60)
+            + ' : '
+            + (Math.floor(this.state.time % 60) < 10 ? '0' + Math.floor(this.state.time % 60) : Math.floor(this.state.time % 60))
+          }
         </Text>
         <Text style={styles.alert}>
           {'翻转手机开始计时'}
@@ -191,7 +232,7 @@ export default class App extends Component<{}> {
 
             if (this.state.faceStateDown === true) return;
 
-            this.setState({time: 25 * 60});
+            this.setState({time: DEFAULT_TIME});
             this.whoosh && this.whoosh.release();
             this.srcName = null;
           }}

@@ -15,7 +15,7 @@ import {
   NativeModules
 } from 'react-native';
 
-const { ToolManager } = NativeModules;
+const {ToolManager} = NativeModules;
 
 
 const {width, height} = Dimensions.get('window');
@@ -53,7 +53,7 @@ export default class Navigator extends Component {
           style={styles.item}
           onPress={() => {
             this.setState({mute: !this.state.mute});
-
+            this.props.onMuteChange(!this.state.mute);
           }}
         >
           {
