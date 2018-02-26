@@ -13,13 +13,18 @@ import {
   View,
   TouchableOpacity,
   ImageBackground,
-  Dimensions
+  Dimensions,
+  NativeModules,
+  Vibration,
+  NativeEventEmitter
 } from 'react-native';
 
 import Swiper from 'react-native-swiper';
 import Navigator from "./react-native/Navigator";
 const {width, height} = Dimensions.get('window');
 import SplashScreen from "rn-splash-screen";
+let CoreMotionManager = NativeModules.CoreMotionManager;
+let Sound = require('react-native-sound');
 
 const RATIO_HEIGHT = height / 677;
 const RATIO_WIDTH = width / 375;
@@ -28,16 +33,98 @@ const REMOVE_HEIGHT = 20 * RATIO_HEIGHT;
 export default class App extends Component<{}> {
   constructor(props) {
     super(props);
+    this.faceStateDown = null;
+    this.whoosh = null;
+    this.srcName = null;
     this.state = {
       index: 0,
-      time: '25:00'
+      time: '25:00',
+      faceStateDown: this.faceStateDown
     };
+  }
+
+  componentWillMount() {
+    if (Platform.OS === 'ios') {
+      CoreMotionManager.startHandling();
+      const coreMotionManagerModuleEvent = new NativeEventEmitter(CoreMotionManager);
+      coreMotionManagerModuleEvent.addListener('FaceDown', (notification) => {
+        if (this.faceStateDown === true) return;
+        Vibration.vibrate([0, 1], false);
+        this.faceStateDown = true;
+        this.setState({faceStateDown: true});
+        this._playMusic(data[this.state.index].music)
+      });
+      coreMotionManagerModuleEvent.addListener('FaceUp', () => {
+        if (this.faceStateDown === false) return;
+        if (this.faceStateDown !== null) Vibration.vibrate([0, 1], false);
+        this.faceStateDown = false;
+        this.setState({faceStateDown: false});
+        if (this.whoosh) this.whoosh.pause();
+      })
+
+    }
   }
 
   componentDidMount() {
     setTimeout(() => {
       SplashScreen.hide();
     }, 2000);
+  }
+
+  _playMusic(src) {
+    console.log(src, '名字');
+
+    if (this.srcName !== src) {
+
+      this.srcName = src;
+      this.whoosh && this.whoosh.release();
+
+      this.whoosh = new Sound(this.srcName, Sound.MAIN_BUNDLE, (error) => {
+        if (error) {
+          console.log('音频加载失败', error);
+          return;
+        }
+        console.log('duration in seconds: ' + this.whoosh.getDuration() + 'number of channels: ' + this.whoosh.getNumberOfChannels());
+        this.whoosh.play((success) => {
+          if (success) {
+            console.log('播放成功');
+          } else {
+            console.log('播放错误');
+            this.whoosh.reset();
+          }
+        });
+      });
+    }
+
+    if (this.whoosh) {
+      this.whoosh.play((success) => {
+        if (success) {
+          console.log('播放成功');
+        } else {
+          console.log('播放错误');
+          this.whoosh.reset();
+        }
+      });
+      return;
+    }
+
+    this.whoosh && this.whoosh.release();
+
+    this.whoosh = new Sound(src, Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        console.log('音频加载失败', error);
+        return;
+      }
+      console.log('duration in seconds: ' + this.whoosh.getDuration() + 'number of channels: ' + this.whoosh.getNumberOfChannels());
+      this.whoosh.play((success) => {
+        if (success) {
+          console.log('播放成功');
+        } else {
+          console.log('播放错误');
+          this.whoosh.reset();
+        }
+      });
+    });
   }
 
   _renderSwiper() {
@@ -143,25 +230,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: "absolute",
     left: (width - 75) / 2,
-    bottom: 200 * RATIO_HEIGHT +  REMOVE_HEIGHT
+    bottom: 200 * RATIO_HEIGHT + REMOVE_HEIGHT
   }
 });
 
 const data = [
   {
     source: require('./react-native/images/leaf.jpg'),
-    title: '林'
+    title: '林',
+    music: 'forest.mp3'
   },
   {
     source: require('./react-native/images/rain.jpg'),
-    title: '雨'
+    title: '雨',
+    music: 'rain.wav'
   },
   {
     source: require('./react-native/images/sea.jpg'),
-    title: '海'
+    title: '海',
+    music: 'sea.wav'
   },
   {
     source: require('./react-native/images/wind.jpg'),
-    title: '风'
+    title: '风',
+    music: 'wind.mp3'
   },
 ];
