@@ -38,7 +38,7 @@ export default class App extends Component<{}> {
     this.srcName = null;
     this.state = {
       index: 0,
-      time: '25:00',
+      time: 25 * 60,
       faceStateDown: this.faceStateDown
     };
   }
@@ -52,7 +52,8 @@ export default class App extends Component<{}> {
         Vibration.vibrate([0, 1], false);
         this.faceStateDown = true;
         this.setState({faceStateDown: true});
-        this._playMusic(data[this.state.index].music)
+        this._playMusic(data[this.state.index].music);
+        this._cutDown();
       });
       coreMotionManagerModuleEvent.addListener('FaceUp', () => {
         if (this.faceStateDown === false) return;
@@ -60,6 +61,7 @@ export default class App extends Component<{}> {
         this.faceStateDown = false;
         this.setState({faceStateDown: false});
         if (this.whoosh) this.whoosh.pause();
+        this._stopCutDown()
       })
 
     }
@@ -71,8 +73,17 @@ export default class App extends Component<{}> {
     }, 2000);
   }
 
+  _cutDown() {
+    this.timer = setInterval(() =>  {
+      this.setState({time: this.state.time - 1})
+    }, 1000)
+  }
+
+  _stopCutDown() {
+    this.timer && clearInterval(this.timer)
+  }
+
   _playMusic(src) {
-    console.log(src, '名字');
 
     if (this.srcName !== src) {
 
@@ -94,6 +105,8 @@ export default class App extends Component<{}> {
           }
         });
       });
+
+      return;
     }
 
     if (this.whoosh) {
@@ -136,12 +149,12 @@ export default class App extends Component<{}> {
         autoplay={false}
         bounces={false}
         removeClippedSubviews={false}
-        scrollEnabled={true}
+        scrollEnabled={this.state.faceStateDown !== true}
         dot={<View style={[{backgroundColor: 'white'}, styles.dot]}/>}
         activeDot={<View style={[{backgroundColor: '#BBBBBB'}, styles.dot]}/>}
         onMomentumScrollEnd={(evt) => {
           let contentOffsetY = evt.nativeEvent.contentOffset.y;
-          this.setState({index: contentOffsetY / height})
+          this.setState({index: contentOffsetY / height, time: 25 * 60});
         }}
       >
         {
@@ -161,11 +174,13 @@ export default class App extends Component<{}> {
     StatusBar.setBarStyle('light-content');
     return (
       <View style={{height: height, width: width}}>
+
         {this._renderSwiper()}
+
         <Navigator title={data[this.state.index].title}/>
 
         <Text style={styles.time}>
-          {this.state.time}
+          {Math.floor(this.state.time / 60) + ' : ' + (Math.floor(this.state.time % 60) < 10 ? '0' + Math.floor(this.state.time % 60) : Math.floor(this.state.time % 60))}
         </Text>
         <Text style={styles.alert}>
           {'翻转手机开始计时'}
@@ -173,6 +188,12 @@ export default class App extends Component<{}> {
         <TouchableOpacity
           style={styles.btn}
           onPress={() => {
+
+            if (this.state.faceStateDown === true) return;
+
+            this.setState({time: 25 * 60});
+            this.whoosh && this.whoosh.release();
+            this.srcName = null;
           }}
           activeOpacity={0.7}
         >
@@ -241,7 +262,7 @@ const data = [
     music: 'forest.mp3'
   },
   {
-    source: require('./react-native/images/rain.jpg'),
+    source: require('./react-native/images/rain.png'),
     title: '雨',
     music: 'rain.wav'
   },
