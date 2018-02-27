@@ -74,21 +74,4 @@ RCT_EXPORT_METHOD(startHandling) {
   [self sendEventWithName:name body:[NSDictionary dictionary]];
 }
 
-//// 在添加第一个监听函数时触发
-//-(void)startObserving {
-//  hasListeners = YES;
-//}
-//
-//-(void)stopObserving {
-//  hasListeners = NO;
-//}
-//
-//- (void)calendarEventReminderReceived:(NSNotification *)notification
-//{
-//  NSString *eventName = notification.userInfo[@"name"];
-//  if (hasListeners) {
-//    [self sendEventWithName:@"FaceDown" body:@{@"name": eventName}];
-//  }
-//}
-
 @end

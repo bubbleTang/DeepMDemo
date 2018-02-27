@@ -23,13 +23,14 @@ import Swiper from 'react-native-swiper';
 import Navigator from "./react-native/Navigator";
 const {width, height} = Dimensions.get('window');
 import SplashScreen from "rn-splash-screen";
+import TimeSwiperView from "./react-native/TimeSwiperView";
 let CoreMotionManager = NativeModules.CoreMotionManager;
 let Sound = require('react-native-sound');
 
 const RATIO_HEIGHT = height / 677;
 const RATIO_WIDTH = width / 375;
 const REMOVE_HEIGHT = 20 * RATIO_HEIGHT;
-const DEFAULT_TIME = 1 * 60;
+const DEFAULT_TIME = 25 * 60;
 
 export default class App extends Component<{}> {
   constructor(props) {
@@ -37,6 +38,7 @@ export default class App extends Component<{}> {
     this.faceStateDown = null;
     this.whoosh = null;
     this.srcName = null;
+    this.originTime = DEFAULT_TIME;
     this.state = {
       index: 0,
       time: DEFAULT_TIME,
@@ -85,7 +87,7 @@ export default class App extends Component<{}> {
       } else {
 
         Vibration.vibrate([0, 1], false);
-        this.setState({time: DEFAULT_TIME});
+        this.setState({time: this.originTime});
         this.whoosh && this.whoosh.pause();
         this.whoosh && this.whoosh.release();
         this.timer && clearInterval(this.timer);
@@ -181,7 +183,7 @@ export default class App extends Component<{}> {
         activeDot={<View style={[{backgroundColor: '#BBBBBB'}, styles.dot]}/>}
         onMomentumScrollEnd={(evt) => {
           let contentOffsetY = evt.nativeEvent.contentOffset.y;
-          this.setState({index: contentOffsetY / height, time: DEFAULT_TIME});
+          this.setState({index: contentOffsetY / height, time: this.originTime});
         }}
       >
         {
@@ -216,13 +218,14 @@ export default class App extends Component<{}> {
           }}
         />
 
-        <Text style={styles.time}>
-          {
-            Math.floor(this.state.time / 60)
-            + ' : '
-            + (Math.floor(this.state.time % 60) < 10 ? '0' + Math.floor(this.state.time % 60) : Math.floor(this.state.time % 60))
-          }
-        </Text>
+        <TimeSwiperView
+          time={this.state.time}
+          onTimeChange={(changedTime) => {
+            this.setState({time: changedTime});
+            this.originTime = changedTime;
+          }}
+        />
+
         <Text style={styles.alert}>
           {'翻转手机开始计时'}
         </Text>
@@ -232,7 +235,7 @@ export default class App extends Component<{}> {
 
             if (this.state.faceStateDown === true) return;
 
-            this.setState({time: DEFAULT_TIME});
+            this.setState({time: this.originTime});
             this.whoosh && this.whoosh.release();
             this.srcName = null;
           }}
@@ -257,8 +260,8 @@ const styles = StyleSheet.create({
     width: 10,
     borderRadius: 5,
     marginRight: 17 / 2,
-    marginTop: 25 / 2,
-    marginBottom: 25 / 2,
+    marginTop: 30 / 2,
+    marginBottom: 30 / 2,
   },
   time: {
     height: 80,
